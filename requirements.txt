@@ -1,0 +1,9 @@
+pandas
+configparser
+gensim
+matplotlib
+numpy
+scipy
+scikit-learn
+spacy
+helpers
