@@ -22,9 +22,9 @@ def main():
     arg = parser.add_argument
     arg('--input', help='Path to input file with contexts', required=True)
     arg('--model', help='Path to word2vec model', required=True)
-    arg('--weights', dest='weights', action='store_true', help='Use word weights?')
-    arg('--2stage', dest='twostage', action='store_true', help='2-stage clustering?')
-    arg('--test', dest='testing', action='store_true', help='Make predictions for test file with no gold labels?')
+    arg('--weights', dest='weights', action='store_true', help='If it is neccessary to use weights of the model')
+    arg('--2stage', dest='twostage', action='store_true', help='Use 2-stage clustering')
+    arg('--test', dest='testing', action='store_true', help='Work with test csv files')
 
     parser.set_defaults(testing=False)
     parser.set_defaults(twostage=False)
@@ -41,15 +41,13 @@ def main():
     model.init_sims(replace=True)
     dataset = args.input
 
-    # This combination of the Affinity Propagation parameters was best in our experiments.
-    # But in your task they can be different!
-    damping = 0.7
-    preference = -0.7
+    damping = 0.8
+    preference = -0.9
 
     df = read_csv(dataset, sep="\t", encoding="utf-8")
     res = df.copy()
     df = preprocess(df)
-    print(df.head)
+
     predicted = []
     goldsenses = []
     for query in df.word.unique():
@@ -66,7 +64,6 @@ def main():
             label = query + str(identifier)
             contexts.append(label)
             if type(con) == float:
-                print('Empty context at', label, file=sys.stderr)
                 fp = np.zeros(model.vector_size)
             else:
                 bow = con.split()
@@ -89,8 +86,6 @@ def main():
         predicted += cur_predicted
         if not args.testing:
             gold = subset.gold_sense_id
-            #print('Gold clusters:', len(set(gold)), file=sys.stderr)
-        #print('Predicted clusters:', len(set(cur_predicted)), file=sys.stderr)
 
     res.predict_sense_id = predicted
     fname = path.splitext(path.basename(args.input))[0]
